@@ -18,4 +18,4 @@ Do Wykonania całości zostały wykorzystane :
 
 
 1. W pierwszym punkcie zostały wykonane testy na module Ethernet czy jest posiadany dostęp do sieci oraz do spisania danych dotyczących sieci które będą potrzebne w dalszej części projektu do stworzenia Server-Weba który umożliwi nam sterowanie całym projektem 
-2. 
+2. Został stworzony program który tworzy nam serwer-Web w którym będziemy konfigurować ustawienia taśmociągu takie jak prędkość oraz kierunek obrotów 

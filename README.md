@@ -19,3 +19,6 @@ Do Wykonania całości zostały wykorzystane :
 
 1. W pierwszym punkcie zostały wykonane testy na module Ethernet czy jest posiadany dostęp do sieci oraz do spisania danych dotyczących sieci które będą potrzebne w dalszej części projektu do stworzenia Server-Weba który umożliwi nam sterowanie całym projektem 
 2. Został stworzony program który tworzy nam serwer-Web w którym będziemy konfigurować ustawienia taśmociągu takie jak prędkość oraz kierunek obrotów 
+3. Został stworzony program którego zadanie jest sterowanie silnikami DC 
+4. Zostanie stworzony program który będzie wykrywać kolory bloczków i sortować je na taśmociągu 
+5. zostanie stworzony program który będzie zczytywać dane użytkownika z karty dostępu i umożliwi mu zalogowanie się do maszyny 

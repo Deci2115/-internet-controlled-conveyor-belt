@@ -1,76 +1,154 @@
-// Poniższy  program przedstawia w jaki sposób działają silniki DC 
+Porgram działania 2 silników z możliwością sterowania przez serwer internetowy 
 
-#include <Robojax_L298N_DC_motor.h>
-// motor 1 settings
+//Biblioteki wykorzystane do połączenia się z ESP8266 
+#include <ESP8266WiFi.h>
+#include <ESPAsyncTCP.h>
+#include <ESPAsyncWebServer.h>
 
-#define ENA 9 // this pin must be PWM enabled pin if Arduino board is used
-#define IN1 7
-#define IN2 6
+//poniższe komenty umożliwiają nam dostęp do sieci WI-Fi 
+const char* ssid = "login";
+const char* password = "hasło";
 
-// motor 2 settings
-#define IN3 5
-#define IN4 4
-#define ENB 3// this pin must be PWM enabled pin if Arduino board is used
+//Przypisanie odpowiednich pinów do płytki 
+int ENA_pin = D7;
+int ENB_pin = D8;
+int IN1 = D1;
+int IN2 = D2;
+int IN3 = D3;
+int IN4 = D4;
 
-
-const int CCW = 2; // do not change
-const int CW  = 1; // do not change
-
-#define motor1 1 // do not change
-#define motor2 2 // do not change
-
-// for single motor
-//Robojax_L298N_DC_motor robot(IN1, IN2, ENA, true);	
-
-// for two motors without debug information	// Watch video instruciton for this line: https://youtu.be/2JTMqURJTwg
-Robojax_L298N_DC_motor robot(IN1, IN2, ENA, IN3, IN4, ENB);
+//Zadeklarowanie zmiennych to odpowiedniego działania silników 
+String slider_value = "0";
+String slider_value2 = "0";
+const char* input_parameter = "value";
+const char* input_parameter2 = "value2";
 
 
-void setup() {
-  Serial.begin(115200);
-  robot.begin();
-  //L298N DC Motor by Robojax.com
-
+//łaczenie z siecią na porcie 80 
+AsyncWebServer server(80);
+////kod HTML , ccs i javascrit który opisuje nam wygląd stroy oraz zasadę działania tej strony 
+const char index_html[] PROGMEM = R"rawliteral(
+<!DOCTYPE HTML><html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DC Motors Speed Control Web Server</title>
+  <style>
+    html {font-family: Times New Roman; display: inline-block; text-align: center;}
+    h2 {font-size: 2.3rem;}
+    h4 {font-size: 1.8rem;}
+    p {font-size: 2.0rem;}
+    body {max-width: 400px; margin:0px auto; padding-bottom: 25px;}
+    .slider { -webkit-appearance: none; margin: 14px; width: 360px; height: 25px; background: #FF0000;
+      outline: none; -webkit-transition: .2s; transition: opacity .2s;}
+    .slider::-webkit-slider-thumb {-webkit-appearance: none; appearance: none; width: 35px; height: 35px; background:#01070a; cursor: pointer;}
+    .slider::-moz-range-thumb { width: 35px; height: 35px; background: #01070a; cursor: pointer; } 
+    
+    .slider2 { -webkit-appearance: none; margin: 14px; width: 360px; height: 25px; background: #FF0000;
+      outline: none; -webkit-transition: .2s; transition: opacity .2s;}
+    .slider2::-webkit-slider-thumb {-webkit-appearance: none; appearance: none; width: 35px; height: 35px; background:#01070a; cursor: pointer;}
+    .slider2::-moz-range-thumb { width: 35px; height: 35px; background: #01070a; cursor: pointer; } 
+  </style>
+</head>
+<body>
+  <h2>DC Motor Speed Control Web Server</h2>
+  <h4>Silnik 1</h4>
+  <p><span id="textslider_value">%SLIDERVALUE%</span></p>
+  <p><input type="range" onchange="updateSliderPWM(this)" id="pwmSlider" min="0" max="255" value="%SLIDERVALUE%" step="1" class="slider"></p>
+  
+  <br/>
+  <h4>Silnik 2</h4>
+  <p><span id="textslider_value2">%SLIDERVALUE2%</span></p>
+  <p><input type="range" onchange="updateSliderPWM2(this)" id="pwmSlider2" min="0" max="255" value="%SLIDERVALUE2%" step="1" class="slider2"></p>
+  
+<script>
+function updateSliderPWM(element) {
+  var slider_value = document.getElementById("pwmSlider").value;
+  document.getElementById("textslider_value").innerHTML = slider_value;
+  console.log(slider_value);
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", "/slider?value="+slider_value, true);
+  xhr.send();
+  
+}
+function updateSliderPWM2(element) {
+  var slider_value2 = document.getElementById("pwmSlider2").value;
+  document.getElementById("textslider_value2").innerHTML = slider_value2;
+  console.log(slider_value2);
+  var xhr2 = new XMLHttpRequest();
+  xhr2.open("GET", "/slider?value2="+slider_value2, true);
+  xhr2.send();
 }
 
-void loop() {
-  
- // robot.demo(1);
-  robot.rotate(motor1, 80, CW);//run motor1 at 60% speed in CW direction
-  robot.rotate(motor2, 70, CCW);//run motor1 at 60% speed in CW direction
-  
-  delay(3000);
+</script>
+</body>
+</html>
+)rawliteral";
 
-  robot.brake(1);
-  robot.brake(2);  
-  delay(2000);
-
-
-  robot.rotate(motor1, 100, CW);//run motor1 at 60% speed in CW direction
-  delay(3000);
-  
-  robot.rotate(motor2, 100, CCW);//run motor1 at 60% speed in CW direction
-  
-  robot.brake(1);
-  robot.brake(2);   
-  delay(2000);  
-
-  for(int i=0; i<=100; i++)
-  {
-    robot.rotate(motor1, i, CW);// turn motor1 with i% speed in CW direction (whatever is i) 
-    delay(100);
+// Przypisywanie wartości suwaka do zmiennej 
+String processor(const String& var){
+  if (var == "SLIDERVALUE"){
+    return slider_value;
+  }else if(var=="SLIDERVALUE2"){
+    return slider_value2;
+  }else{
+  return String();
   }
-  delay(2000);
+}
+
+//Zasada działania silników 
+void setup(){
+  Serial.begin(115200);
+  delay(1000);
+  pinMode(ENA_pin, OUTPUT);
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+  pinMode(ENB_pin, OUTPUT);
+  pinMode(IN3, OUTPUT);
+  pinMode(IN4, OUTPUT);
   
-  robot.brake(1);
-  delay(2000);  
+  analogWrite(ENA_pin, slider_value.toInt());
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, LOW);
+  analogWrite(ENB_pin, slider_value2.toInt());
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, LOW);
   
-  for(int i=0; i<=100; i++)
-  {
-    robot.rotate(motor2, i, CW);// turn motor1 with i% speed in CW direction (whatever is i) 
-    delay(100);
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.println("Connecting...");
   }
-  delay(2000);
+
+  Serial.println(WiFi.localIP());
+
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send_P(200, "text/html", index_html, processor);
+  });
+
+  server.on("/slider", HTTP_GET, [] (AsyncWebServerRequest *request) {
+    String message;
+    if (request->hasParam(input_parameter)) {
+      message = request->getParam(input_parameter)->value();
+      slider_value = message;
+      analogWrite(ENA_pin, slider_value.toInt());
+        digitalWrite(IN1, HIGH);
+        digitalWrite(IN2, LOW);
+    }else if (request->hasParam(input_parameter2)) {
+      message = request->getParam(input_parameter2)->value();
+      slider_value2 = message;
+      analogWrite(ENB_pin, slider_value2.toInt());
+        digitalWrite(IN3, HIGH);
+        digitalWrite(IN4, LOW);
+    }else{
+      message = "No message sent";
+    }
+    Serial.println(message);
+    request->send(200, "text/plain", "OK");
+  });
   
-  robot.brake(2);
-  delay(2000);
+  server.begin();
+}
+  void loop() {
+  
+}
+

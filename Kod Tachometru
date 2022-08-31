@@ -1,7 +1,12 @@
 import RPi.GPIO AS GPIO
+import sys
 import time
-GPIO.setmode(GPIO.BOARD)
-GPIO.setup(8,GPIO.IN,Pin.PULL_DOWN)
+import signal
+
+Button_GPIO = 16
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(BUTTON_GPIO,GPIO.IN,pull_up_down=GPIO.PUD_UP)
 
 # global variable
 counter = 0
@@ -10,15 +15,14 @@ counter = 0
 SAMPLING_TIME = 1 # ( in seconds )
                   
 
-# pin declaration
-tachometerPin = Pin(8, Pin.IN, Pin.PULL_DOWN)
 
 
 # interrupt handler function
-def tachometer(8):# pin is default positional argument
+def tachometer(pin):# pin is default positional argument
     global counter
     counter += 1
-    
+    GPIO.ad_event_detect(BUTTON_GPIO,GPIO.FALLING,
+                         callback=tachometer,boucetime=100)
 # attach the interrupt to the tachometer Pin
 tachometerPin.irq(trigger = Pin.IRQ_RISING,
                   handler = tachometer)

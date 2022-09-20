@@ -1,6 +1,6 @@
 # -internet-controlled-conveyor-belt
 
-Projekt w założeniu ma przedstawiać taśmociąg sterowany zdalnie przez sieć. Program będzie miał możliwość sterowania prędkością oraz kierunkami silników każdego z osobna oraz czujnik sortowania w zależności od koloru przedmiotu który będzie się znajdować na taśmociągu , będzie go wypychać prasom lub też przepuszczać dalej. Urządzenie również będzie posiadać zabezpieczenie w postaci czytnika kart dostępu 
+Projekt w założeniu ma przedstawiać taśmociąg sterowany zdalnie przez sieć. Program będzie miał możliwość sterowania prędkością oraz kierunkami silników każdego z osobna oraz czujnik sortowania w zależności od koloru przedmiotu który będzie się znajdować na taśmociągu, będzie go wypychać prasom lub też przepuszczać dalej. Urządzenie również będzie posiadać zabezpieczenie w postaci czytnika kart dostępu 
 
 Do Wykonania całości zostały wykorzystane :
 - Arduino 
